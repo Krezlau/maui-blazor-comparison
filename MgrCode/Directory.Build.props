@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <JavaSdkDirectory>/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home</JavaSdkDirectory>
+        <AndroidSdkDirectory>$HOME/Library/Android/sdk</AndroidSdkDirectory>
+    </PropertyGroup>
+</Project>

@@ -1,0 +1,65 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+**/[Pp]ackages/repositories.config
+
+## Rider
+.idea/
+*.sln.iml
+
+## Visual Studio
+.vs/
+*.rsuser
+
+## MAUI XAML source gen output
+**/Debug/**
+**/Release/**
+
+## Android
+*.apk
+*.aab
+*.apks
+*.keystore
+*.jks
+
+## macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## MSTest
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+## Coverage
+Generated\ Code/
+coverage.opencover.xml
+lcov.info
+*.lcov
+*.coverage
+*.coveragexml

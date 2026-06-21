@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MgrCode.Backend/MgrCode.Backend.csproj" />
+  <Project Path="MgrCode.BlazorApp/MgrCode.BlazorApp.csproj" />
+  <Project Path="MgrCode.XamlApp/MgrCode.XamlApp.csproj" />
+</Solution>

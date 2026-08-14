@@ -2,4 +2,6 @@
   <Project Path="MgrCode.Backend/MgrCode.Backend.csproj" />
   <Project Path="MgrCode.BlazorApp/MgrCode.BlazorApp.csproj" />
   <Project Path="MgrCode.XamlApp/MgrCode.XamlApp.csproj" />
+  <Project Path="MgrCode.MockServer/MgrCode.MockServer.csproj" />
+
 </Solution>

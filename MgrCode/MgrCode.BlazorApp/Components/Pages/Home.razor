@@ -1,64 +1,66 @@
 ﻿@page "/"
+@using MgrCode.Backend.Models
 @using MgrCode.Backend.ViewModels
-@inject MainViewModel ViewModel
+@inject CryptoDashboardViewModel Vm
 
-<h1>Hello, World from Blazor!</h1>
+<h1>Crypto Dashboard</h1>
 
-<p role="status">@ViewModel.CountText</p>
+<p><strong>@Vm.Status</strong></p>
+<p>Updates: @Vm.UpdatesReceived</p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
-
-<h3 class="mt-4">Todo Items</h3>
-
-<div class="input-group mb-3">
-    <input @bind="ViewModel.NewTodoTitle" type="text" class="form-control" placeholder="Add a todo..." />
-    <button class="btn btn-outline-secondary" @onclick="AddTodo">Add</button>
+<div class="btn-group mb-3">
+    <button class="btn btn-primary" @onclick="() => Vm.InitializeCommand.Execute(null)">Initialize</button>
+    <button class="btn btn-success" @onclick="() => Vm.StartCommand.Execute(null)">Start</button>
+    <button class="btn btn-secondary" @onclick="() => Vm.StopCommand.Execute(null)">Stop</button>
 </div>
 
-@if (ViewModel.TodoItems.Count == 0)
-{
-    <p class="text-muted">No todos yet. Add one above!</p>
-}
-else
-{
-    <ul class="list-group">
-        @foreach (var item in ViewModel.TodoItems)
-        {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <input type="checkbox" checked="@item.IsCompleted"
-                           @onchange="() => ToggleTodo(item)" />
-                    <span class="ms-2" style="text-decoration: @(item.IsCompleted ? "line-through" : "none")">@item.Title</span>
-                </div>
-                <button class="btn btn-sm btn-danger" @onclick="() => DeleteTodo(item)">Delete</button>
-            </li>
-        }
-    </ul>
-}
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Price</th>
+                <th>Change</th>
+                <th>Volume</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Vm.Tickers)
+            {
+                <tr>
+                    <td>@t.Symbol</td>
+                    <td>@t.LastPrice.ToString("F8")</td>
+                    <td class="@(t.Direction == PriceDirection.Up ? "text-success" : t.Direction == PriceDirection.Down ? "text-danger" : string.Empty)">
+                        @t.Price24hPcnt.ToString("0.00%")
+                    </td>
+                    <td>@t.Volume24h.ToString("F2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.LoadTodosCommand.ExecuteAsync(null);
+        if (!Vm.IsInitialized)
+            await Vm.InitializeCommand.ExecuteAsync(null);
+        _ = RefreshLoopAsync();
     }
 
-    private void IncrementCount()
+    private async Task RefreshLoopAsync()
     {
-        ViewModel.IncrementCountCommand.Execute(null);
-    }
-
-    private async Task AddTodo()
-    {
-        await ViewModel.AddTodoCommand.ExecuteAsync(null);
-    }
-
-    private async Task ToggleTodo(MgrCode.Backend.Models.TodoItem item)
-    {
-        await ViewModel.ToggleTodoCommand.ExecuteAsync(item);
-    }
-
-    private async Task DeleteTodo(MgrCode.Backend.Models.TodoItem item)
-    {
-        await ViewModel.DeleteTodoCommand.ExecuteAsync(item);
+        while (true)
+        {
+            try
+            {
+                await Task.Delay(250);
+                await InvokeAsync(StateHasChanged);
+            }
+            catch
+            {
+                break;
+            }
+        }
     }
 }

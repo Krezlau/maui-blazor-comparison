@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MgrCode.Backend;
 using MgrCode.Backend.Services;
 using MgrCode.Backend.ViewModels;
 
@@ -18,8 +19,12 @@ public static class MauiProgram
 
         builder.Services.AddMauiBlazorWebView();
 
-        builder.Services.AddSingleton<ITodoService, TodoService>();
-        builder.Services.AddTransient<MainViewModel>();
+        builder.Services.AddSingleton(new BackendOptions());
+        builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton<IMainThreadDispatcher, BlazorMainThreadDispatcher>();
+        builder.Services.AddSingleton<IBybitService, MockBybitService>();
+        builder.Services.AddSingleton<PerformanceViewModel>();
+        builder.Services.AddSingleton<CryptoDashboardViewModel>();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

@@ -4,9 +4,18 @@ namespace MgrCode.XamlApp;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage(MainViewModel viewModel)
+    private readonly CryptoDashboardViewModel _viewModel;
+
+    public MainPage(CryptoDashboardViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        BindingContext = _viewModel = viewModel;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (!_viewModel.IsInitialized)
+            await _viewModel.InitializeCommand.ExecuteAsync(null);
     }
 }

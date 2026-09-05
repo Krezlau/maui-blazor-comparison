@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 using MgrCode.Backend;
 using MgrCode.Backend.Services;
 using MgrCode.Backend.ViewModels;
@@ -25,6 +26,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IBybitService, MockBybitService>();
         builder.Services.AddSingleton<PerformanceViewModel>();
         builder.Services.AddSingleton<CryptoDashboardViewModel>();
+        builder.Services.AddSingleton(new RunConfig("blazor"));
+        builder.Services.AddSingleton(CreateSink);
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
@@ -32,5 +35,36 @@ public static class MauiProgram
 #endif
 
         return builder.Build();
+    }
+
+    private static CsvPerformanceSink CreateSink(IServiceProvider services)
+    {
+        var runConfig = services.GetRequiredService<RunConfig>();
+        return new CsvPerformanceSink(
+            Path.Combine(FileSystem.AppDataDirectory, "results"),
+            runConfig.RunLabel,
+            BuildMetadata("blazor"));
+    }
+
+    private static Dictionary<string, string> BuildMetadata(string appName)
+        => new()
+        {
+            ["app"] = appName,
+            ["platform"] = DeviceInfo.Platform.ToString(),
+            ["device"] = DeviceInfo.Model,
+            ["manufacturer"] = DeviceInfo.Manufacturer,
+            ["os"] = DeviceInfo.VersionString,
+            ["arch"] = RuntimeInformation.ProcessArchitecture.ToString(),
+            ["config"] = BuildConfiguration(),
+            ["refreshHz"] = DeviceDisplay.Current.MainDisplayInfo.RefreshRate.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)
+        };
+
+    private static string BuildConfiguration()
+    {
+#if DEBUG
+        return "Debug";
+#else
+        return "Release";
+#endif
     }
 }

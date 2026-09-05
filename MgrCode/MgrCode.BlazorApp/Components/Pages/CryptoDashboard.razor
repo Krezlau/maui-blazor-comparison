@@ -3,6 +3,8 @@
 @using MgrCode.Backend.ViewModels
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @inject CryptoDashboardViewModel Vm
+@inject CsvPerformanceSink Sink
+@inject RunConfig RunConfig
 
 <div class="dash">
     <div class="dash-top">
@@ -72,8 +74,17 @@
         if (!Vm.IsInitialized)
             await Vm.InitializeCommand.ExecuteAsync(null);
 
+        Vm.Performance.SetRefreshRate(DeviceDisplay.Current.MainDisplayInfo.RefreshRate);
+
         _sampleCts = new CancellationTokenSource();
         _ = SampleLoopAsync(_sampleCts.Token);
+
+        if (RunConfig.AutoStart)
+        {
+            await Vm.StartCommand.ExecuteAsync(null);
+            if (RunConfig.DurationMs > 0)
+                _ = AutoFinishAsync(_sampleCts.Token, RunConfig.DurationMs);
+        }
     }
 
     private void OnUpdateApplied()
@@ -89,12 +100,28 @@
             {
                 await Task.Delay(500, token);
                 Vm.Performance.SampleStats();
+                Sink?.Append(Vm.Performance.Capture(DateTimeOffset.UtcNow, Vm.FilteredTickers.Count));
                 await InvokeAsync(StateHasChanged);
             }
         }
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private async Task AutoFinishAsync(CancellationToken token, int durationMs)
+    {
+        try
+        {
+            await Task.Delay(durationMs, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        Vm.StopCommand.Execute(null);
+        Sink?.Complete();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -109,5 +136,6 @@
         _sampleCts?.Cancel();
         _sampleCts?.Dispose();
         _sampleCts = null;
+        Sink?.Complete();
     }
 }

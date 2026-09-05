@@ -9,8 +9,22 @@ public partial class PerformanceViewModel : ObservableObject
     private long _updateStartTicks;
     private long _renderCount;
     private long _appliedCount;
+    private double _refreshRateHz = 60d;
     private readonly long _startedAt = Stopwatch.GetTimestamp();
     private long _lastSample = Stopwatch.GetTimestamp();
+
+    private const double ExpectedSampleMs = 500d;
+
+    /// <summary>
+    /// Called once per app at startup with the real display refresh rate
+    /// (<see cref="DeviceDisplay.MainDisplayInfo.RefreshRate"/>). Drives the
+    /// dropped-frame estimate in <see cref="SampleStats"/>.
+    /// </summary>
+    public void SetRefreshRate(double refreshRateHz)
+    {
+        if (refreshRateHz > 0)
+            _refreshRateHz = refreshRateHz;
+    }
 
     [ObservableProperty]
     private double _updateLatencyMs;
@@ -75,21 +89,35 @@ public partial class PerformanceViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Called by each app's ~500ms timer: derives FPS / updates-per-sec from the hooks and
-    /// samples memory + GC counters. Full instrumentation lives in Step 4.
+    /// Called by each app's ~500ms timer: derives FPS / updates-per-sec from the hooks,
+    /// estimates dropped frames and UI-thread pressure from sample drift, and samples
+    /// memory + GC counters. Full GC-pause instrumentation stays a stub (see plan).
     /// </summary>
     public void SampleStats()
     {
         var now = Stopwatch.GetTimestamp();
-        var seconds = Stopwatch.GetElapsedTime(_lastSample).TotalSeconds;
+        var elapsedMs = Stopwatch.GetElapsedTime(_lastSample).TotalMilliseconds;
+        var seconds = elapsedMs / 1000d;
         if (seconds <= 0)
         {
             _lastSample = now;
             return;
         }
 
-        Fps = Interlocked.Exchange(ref _renderCount, 0) / seconds;
-        UpdatesPerSecond = Interlocked.Exchange(ref _appliedCount, 0) / seconds;
+        var renders = Interlocked.Exchange(ref _renderCount, 0);
+        var applied = Interlocked.Exchange(ref _appliedCount, 0);
+
+        Fps = renders / seconds;
+        UpdatesPerSecond = applied / seconds;
+
+        // UI-thread pressure: a busy UI thread delays the 500ms sample timer continuation,
+        // so the measured interval exceeds the requested one.
+        UiThreadBusyPct = Math.Clamp((elapsedMs - ExpectedSampleMs) / ExpectedSampleMs, 0d, 1d) * 100d;
+
+        // Dropped-frame estimate: frames that the refresh rate expected but that never rendered.
+        var expectedFrames = Math.Ceiling(_refreshRateHz * seconds);
+        DroppedFrames = (int)Math.Max(0, expectedFrames - renders);
+
         _lastSample = now;
 
         MemoryMb = GC.GetTotalMemory(false) / (1024d * 1024d);
@@ -99,10 +127,10 @@ public partial class PerformanceViewModel : ObservableObject
         UptimeMs = Stopwatch.GetElapsedTime(_startedAt).TotalMilliseconds;
     }
 
-    public PerformanceSnapshot Capture(string runLabel, DateTimeOffset timestamp)
+    public PerformanceSnapshot Capture(DateTimeOffset timestamp, int tickerCount)
         => new(
             Timestamp: timestamp,
-            TickerCount: 0,
+            TickerCount: tickerCount,
             UpdateLatencyMs: UpdateLatencyMs,
             Fps: Fps,
             DroppedFrames: DroppedFrames,

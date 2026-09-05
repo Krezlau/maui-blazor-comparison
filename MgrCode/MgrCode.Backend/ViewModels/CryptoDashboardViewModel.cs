@@ -130,6 +130,7 @@ public partial class CryptoDashboardViewModel : ObservableObject
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine($"[stream] error: {ex}");
                 SetStatus($"Stream error: {ex.Message}");
             }
             finally

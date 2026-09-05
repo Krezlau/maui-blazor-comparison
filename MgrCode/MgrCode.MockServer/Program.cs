@@ -50,9 +50,10 @@ app.Map("/v5/public/spot", async (HttpContext context) =>
 
     var sender = Task.Run(async () =>
     {
+        var debug = Environment.GetEnvironmentVariable("MGR_DEBUG_SERVER") == "1";
+        long sent = 0;
         try
         {
-            var envelope = new byte[0];
             while (!cts.IsCancellationRequested && socket.State == WebSocketState.Open)
             {
                 if (options.LatencyMs > 0)
@@ -63,14 +64,27 @@ app.Map("/v5/public/spot", async (HttpContext context) =>
                     subscribed = subscriptions.ToArray();
 
                 if (subscribed.Length > 0)
+                {
+                    if (debug)
+                        Console.WriteLine($"[server] conn={connId} sending batch for {subscribed.Length} topics");
                     await SendTickerUpdatesAsync(socket, generator, subscribed, options, cts.Token);
+                    sent += subscribed.Length;
+                    if (debug)
+                        Console.WriteLine($"[server] conn={connId} sent batch (total {sent})");
+                }
 
                 await Task.Delay(options.UpdateIntervalMs, cts.Token);
             }
         }
         catch (OperationCanceledException) { }
-        catch (WebSocketException) { }
-        catch (Exception) { }
+        catch (WebSocketException ex)
+        {
+            if (debug) Console.WriteLine($"[server] conn={connId} ws exception: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            if (debug) Console.WriteLine($"[server] conn={connId} exception: {ex}");
+        }
     });
 
     try

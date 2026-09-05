@@ -11,6 +11,8 @@ public sealed class RunConfig
     public bool AutoStart { get; }
     public bool Collect { get; }
     public int DurationMs { get; }
+    public string BaseUrl { get; }
+    public string BaseWsUrl { get; }
 
     public RunConfig(string defaultLabelPrefix)
     {
@@ -27,20 +29,25 @@ public sealed class RunConfig
         RunLabel = string.IsNullOrWhiteSpace(label)
             ? $"{defaultLabelPrefix}-{DateTime.UtcNow:yyyyMMdd-HHmmss}"
             : label.Trim();
+
+        BaseUrl = NonEmpty(Get(settings, "baseUrl"), "http://localhost:5010");
+        BaseWsUrl = NonEmpty(Get(settings, "baseWsUrl"), "ws://localhost:5010/v5/public/spot");
     }
 
     private static Dictionary<string, string> ReadSettings()
     {
         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var key in new[] { "runLabel", "autostart", "collect", "durationMs" })
+        foreach (var key in new[] { "runLabel", "autostart", "collect", "durationMs", "baseUrl", "baseWsUrl" })
         {
             var value = Environment.GetEnvironmentVariable(key switch
             {
                 "runLabel" => "MGR_RUN_LABEL",
                 "autostart" => "MGR_AUTOSTART",
                 "collect" => "MGR_COLLECT",
-                _ => "MGR_DURATION_MS"
+                "durationMs" => "MGR_DURATION_MS",
+                "baseUrl" => "MGR_BASE_URL",
+                _ => "MGR_WS_URL"
             });
             if (!string.IsNullOrWhiteSpace(value))
                 dict[key] = value;
@@ -59,7 +66,7 @@ public sealed class RunConfig
         var intent = Platform.CurrentActivity?.Intent;
         if (intent is not null)
         {
-            foreach (var key in new[] { "runLabel", "autostart", "collect", "durationMs" })
+            foreach (var key in new[] { "runLabel", "autostart", "collect", "durationMs", "baseUrl", "baseWsUrl" })
             {
                 var value = intent.GetStringExtra(key);
                 if (!string.IsNullOrWhiteSpace(value))
@@ -73,6 +80,9 @@ public sealed class RunConfig
 
     private static string? Get(Dictionary<string, string> settings, string key)
         => settings.TryGetValue(key, out var value) ? value : null;
+
+    private static string NonEmpty(string? value, string fallback)
+        => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
     private static bool IsTrue(string? value)
         => value is not null && (value == "1" || value.Equals("true", StringComparison.OrdinalIgnoreCase));

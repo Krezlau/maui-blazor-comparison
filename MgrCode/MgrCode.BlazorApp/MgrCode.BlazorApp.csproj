@@ -71,6 +71,16 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
     </ItemGroup>
 
+    <!-- Release trimming must keep the managed network stack intact for
+         ClientWebSocket (TickerStream). Trimming these roots in past builds
+         left the WS receive loop stalled past the first frame. -->
+    <ItemGroup>
+        <TrimmerRootAssembly Include="System.Net.WebSockets.Client" />
+        <TrimmerRootAssembly Include="System.Net.WebSockets" />
+        <TrimmerRootAssembly Include="System.Net.Sockets" />
+        <TrimmerRootAssembly Include="System.Net.Http" />
+    </ItemGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\MgrCode.Backend\MgrCode.Backend.csproj" />
     </ItemGroup>

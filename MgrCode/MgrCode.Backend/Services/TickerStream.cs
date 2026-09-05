@@ -29,6 +29,8 @@ public sealed class TickerStream : IAsyncEnumerable<Ticker>
     public async IAsyncEnumerator<Ticker> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
         var buffer = new byte[BufferSize];
+        var debug = Environment.GetEnvironmentVariable("MGR_DEBUG_STREAM") == "1";
+        long frames = 0, parsed = 0, subscribeBytes = 0;
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -37,6 +39,7 @@ public sealed class TickerStream : IAsyncEnumerable<Ticker>
             try
             {
                 await socket.ConnectAsync(_uri, cancellationToken);
+                if (debug) Console.Error.WriteLine($"[stream] connected {_uri}");
             }
             catch (OperationCanceledException)
             {
@@ -56,7 +59,10 @@ public sealed class TickerStream : IAsyncEnumerable<Ticker>
 
             try
             {
-                await SendAsync(socket, BuildSubscribePayload(), cancellationToken);
+                var payload = BuildSubscribePayload();
+                await SendAsync(socket, payload, cancellationToken);
+                subscribeBytes = payload.Length;
+                if (debug) Console.Error.WriteLine($"[stream] subscribed {_symbols.Length} symbols ({subscribeBytes}b)");
             }
             catch (OperationCanceledException)
             {
@@ -105,11 +111,25 @@ public sealed class TickerStream : IAsyncEnumerable<Ticker>
                     break;
 
                 lastReceived = Stopwatch.GetTimestamp();
+                frames++;
                 if (TryParseTicker(frame, out var ticker) && ticker is not null)
+                {
+                    parsed++;
                     yield return ticker;
+                }
+                else if (debug)
+                {
+                    Console.Error.WriteLine($"[stream] unparsed frame #{frames}: {Truncate(frame, 120)}");
+                }
             }
+
+            if (debug)
+                Console.Error.WriteLine($"[stream] loop exit: frames={frames} parsed={parsed} subscribe={subscribeBytes}b state={socket.State}");
         }
     }
+
+    private static string Truncate(string value, int max)
+        => value.Length <= max ? value : value[..max] + "…";
 
     private async Task DelayReconnectAsync(CancellationToken cancellationToken)
     {

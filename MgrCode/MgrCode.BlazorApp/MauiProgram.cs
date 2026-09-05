@@ -20,13 +20,17 @@ public static class MauiProgram
 
         builder.Services.AddMauiBlazorWebView();
 
-        builder.Services.AddSingleton(new BackendOptions());
+        builder.Services.AddSingleton(sp =>
+        {
+            var rc = sp.GetRequiredService<RunConfig>();
+            return new BackendOptions { BaseUrl = rc.BaseUrl, WebSocketUrl = rc.BaseWsUrl };
+        });
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<IMainThreadDispatcher, BlazorMainThreadDispatcher>();
         builder.Services.AddSingleton<IBybitService, MockBybitService>();
         builder.Services.AddSingleton<PerformanceViewModel>();
         builder.Services.AddSingleton<CryptoDashboardViewModel>();
-        builder.Services.AddSingleton(new RunConfig("blazor"));
+        builder.Services.AddSingleton(sp => new RunConfig("blazor"));
         builder.Services.AddSingleton(CreateSink);
 
 #if DEBUG
@@ -41,9 +45,19 @@ public static class MauiProgram
     {
         var runConfig = services.GetRequiredService<RunConfig>();
         return new CsvPerformanceSink(
-            Path.Combine(FileSystem.AppDataDirectory, "results"),
+            ResultsDirectory(),
             runConfig.RunLabel,
             BuildMetadata("blazor"));
+    }
+
+    private static string ResultsDirectory()
+    {
+#if ANDROID
+        var dir = Android.App.Application.Context.GetExternalFilesDir(null)?.AbsolutePath;
+        if (!string.IsNullOrEmpty(dir))
+            return Path.Combine(dir, "results");
+#endif
+        return Path.Combine(FileSystem.AppDataDirectory, "results");
     }
 
     private static Dictionary<string, string> BuildMetadata(string appName)

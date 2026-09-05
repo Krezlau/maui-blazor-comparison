@@ -4,6 +4,13 @@ namespace MgrCode.Backend.Models;
 
 public partial class Ticker : ObservableObject
 {
+    public const int SparklineCapacity = 24;
+
+    private readonly object _sparklineGate = new();
+    private readonly decimal[] _sparklineBuffer = new decimal[SparklineCapacity];
+    private int _sparklineWriteIndex;
+    private int _sparklineCount;
+
     public Ticker(string symbol)
     {
         Symbol = symbol;
@@ -12,6 +19,22 @@ public partial class Ticker : ObservableObject
     public string Symbol { get; }
 
     public string Topic => $"ticker.{Symbol}";
+
+    /// <summary>Chronological snapshot of the ring buffer (oldest → newest).</summary>
+    public IReadOnlyList<decimal> SparklineSamples
+    {
+        get
+        {
+            lock (_sparklineGate)
+            {
+                var copy = new decimal[_sparklineCount];
+                var start = _sparklineCount < SparklineCapacity ? 0 : _sparklineWriteIndex;
+                for (var i = 0; i < _sparklineCount; i++)
+                    copy[i] = _sparklineBuffer[(start + i) % SparklineCapacity];
+                return copy;
+            }
+        }
+    }
 
     [ObservableProperty]
     private decimal _lastPrice;
@@ -55,6 +78,9 @@ public partial class Ticker : ObservableObject
     [ObservableProperty]
     private long _priceTick;
 
+    [ObservableProperty]
+    private long _sparklineVersion;
+
     public void Apply(Ticker update)
     {
         Direction = update.LastPrice > LastPrice
@@ -78,5 +104,19 @@ public partial class Ticker : ObservableObject
         Volume24h = update.Volume24h;
         Bid1Price = update.Bid1Price;
         Ask1Price = update.Ask1Price;
+
+        PushSparkline(update.LastPrice);
+        SparklineVersion++;
+    }
+
+    private void PushSparkline(decimal price)
+    {
+        lock (_sparklineGate)
+        {
+            _sparklineBuffer[_sparklineWriteIndex] = price;
+            _sparklineWriteIndex = (_sparklineWriteIndex + 1) % SparklineCapacity;
+            if (_sparklineCount < SparklineCapacity)
+                _sparklineCount++;
+        }
     }
 }

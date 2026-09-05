@@ -1,0 +1,75 @@
+.ticker-row {
+    border-bottom: 1px solid #eef0f3;
+}
+
+    .ticker-row td {
+        padding: 4px 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        vertical-align: middle;
+        color: #1f2937;
+    }
+
+.c-asset {
+    text-align: left;
+}
+
+.c-last, .c-pct, .c-vol, .c-hl, .c-ba, .c-spark {
+    text-align: right;
+}
+
+.c-asset .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background-color: var(--dot);
+    vertical-align: middle;
+}
+
+.c-asset .sym {
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.badge-up {
+    background-color: #e8f8ee;
+    color: #16a34a;
+}
+
+.badge-down {
+    background-color: #fdebec;
+    color: #dc2626;
+}
+
+.spark {
+    width: 80px;
+    height: 32px;
+    display: block;
+    margin-left: auto;
+}
+
+.flash-up {
+    animation: flash-up 300ms ease-out;
+}
+
+@keyframes flash-up {
+    from { background-color: rgba(22, 163, 74, 0.25); }
+    to { background-color: transparent; }
+}
+
+.flash-down {
+    animation: flash-down 300ms ease-out;
+}
+
+@keyframes flash-down {
+    from { background-color: rgba(220, 38, 38, 0.25); }
+    to { background-color: transparent; }
+}

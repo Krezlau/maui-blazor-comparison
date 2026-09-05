@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:MgrCode.XamlApp.Views"
+             xmlns:backendModels="clr-namespace:MgrCode.Backend.Models;assembly=MgrCode.Backend"
+             xmlns:backendVms="clr-namespace:MgrCode.Backend.ViewModels;assembly=MgrCode.Backend"
+             x:Class="MgrCode.XamlApp.Views.CryptoDashboardPage"
+             x:DataType="backendVms:CryptoDashboardViewModel"
+             Title="Crypto Dashboard">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="6" Padding="12">
+
+        <!-- Row 0: title + actions -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <VerticalStackLayout Spacing="1">
+                <Label Text="Crypto Dashboard" FontAttributes="Bold" FontSize="20" />
+                <Label Text="{Binding Status}" FontSize="12" TextColor="Gray" LineBreakMode="TailTruncation" />
+                <Label Text="{Binding UpdatesReceived, StringFormat='Updates: {0:N0}'}" FontSize="12" TextColor="Gray" />
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                <Button Text="Init" Command="{Binding InitializeCommand}" MinimumWidthRequest="54" Padding="12,8" />
+                <Button Text="Start" Command="{Binding StartCommand}" MinimumWidthRequest="54" Padding="12,8" />
+                <Button Text="Stop" Command="{Binding StopCommand}" MinimumWidthRequest="54" Padding="12,8" />
+                <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                    <Label Text="HUD" FontSize="10" HorizontalTextAlignment="Center" />
+                    <Switch IsToggled="{Binding Performance.ShowHud}" Scale="0.8" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Row 1: search -->
+        <Entry Grid.Row="1" Text="{Binding SearchText}" Placeholder="Search symbols…" />
+
+        <!-- Row 2: market strip -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+            <VerticalStackLayout Spacing="0">
+                <Label Text="TOTAL TURNOVER" FontSize="10" TextColor="Gray" />
+                <Label Text="{Binding TotalTurnoverText}" FontSize="14" FontAttributes="Bold" />
+            </VerticalStackLayout>
+            <VerticalStackLayout Grid.Column="1" Spacing="0">
+                <Label Text="TOP GAINER" FontSize="10" TextColor="Gray" />
+                <Label Text="{Binding TopGainerText}" FontSize="14" FontAttributes="Bold" TextColor="#16A34A" />
+            </VerticalStackLayout>
+            <VerticalStackLayout Grid.Column="2" Spacing="0">
+                <Label Text="TOP LOSER" FontSize="10" TextColor="Gray" />
+                <Label Text="{Binding TopLoserText}" FontSize="14" FontAttributes="Bold" TextColor="#DC2626" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Row 3: pinned header (mirrors Blazor thead) -->
+        <Grid Grid.Row="3"
+              ColumnDefinitions="2.2*,1.5*,1.1*,1.3*,1.7*,1.7*,1.3*"
+              ColumnSpacing="6"
+              Padding="4,6"
+              RowDefinitions="Auto"
+              BackgroundColor="#EEF0F3">
+            <Label Grid.Column="1" Text="LAST" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" />
+            <Label Grid.Column="2" Text="24H" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" />
+            <Label Grid.Column="3" Text="VOLUME" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" />
+            <Label Grid.Column="4" Text="HIGH / LOW" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" />
+            <Label Grid.Column="5" Text="BID / ASK" FontAttributes="Bold" FontSize="11" HorizontalTextAlignment="End" />
+            <Label Grid.Column="6" Text="24H" FontAttributes="Bold" FontSize="11" />
+        </Grid>
+
+        <!-- Row 4: virtualized list -->
+        <CollectionView Grid.Row="4" ItemsSource="{Binding FilteredTickers}" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="backendModels:Ticker">
+                    <views:TickerRow />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Perf HUD overlay -->
+        <Border x:Name="HudOverlay" Grid.RowSpan="5"
+                HorizontalOptions="End" VerticalOptions="Start"
+                Margin="0,150,4,0"
+                IsVisible="{Binding Performance.ShowHud}"
+                BackgroundColor="#CC111111" StrokeThickness="0"
+                StrokeShape="RoundRectangle 10" Padding="10,8">
+            <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,Auto" ColumnSpacing="14">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="PERF (XAML)" FontSize="10" FontAttributes="Bold" TextColor="#90EE90" />
+                    <Label Text="{Binding Performance.Fps, StringFormat='FPS   {0:F1}'}" FontSize="12" TextColor="White" />
+                    <Label Text="{Binding Performance.UpdatesPerSecond, StringFormat='UPD/S {0:F0}'}" FontSize="12" TextColor="White" />
+                    <Label Text="{Binding Performance.UpdateLatencyMs, StringFormat='LAT   {0:F2} ms'}" FontSize="12" TextColor="White" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                    <Label Text=" " FontSize="10" />
+                    <Label Text="{Binding Performance.MemoryMb, StringFormat='MEM   {0:F0} MB'}" FontSize="12" TextColor="White" />
+                    <Label Text="{Binding Performance.GcGen0, StringFormat='GC0   {0}'}" FontSize="12" TextColor="White" />
+                    <Label Text="{Binding Performance.GcGen1, StringFormat='GC1   {0}'}" FontSize="12" TextColor="White" />
+                    <Label Text="{Binding Performance.GcGen2, StringFormat='GC2   {0}'}" FontSize="12" TextColor="White" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

@@ -24,12 +24,13 @@ public static class MauiProgram
         builder.Services.AddSingleton<IBybitService, MockBybitService>();
         builder.Services.AddSingleton<PerformanceViewModel>();
         builder.Services.AddSingleton<CryptoDashboardViewModel>();
-        builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+        AppServices.Provider = app.Services;
+        return app;
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MgrCode.Backend.Models;
@@ -11,12 +10,17 @@ public partial class CryptoDashboardViewModel : ObservableObject
 {
     private readonly IBybitService _service;
     private readonly IMainThreadDispatcher _dispatcher;
-    private readonly PerformanceViewModel _performance;
     private readonly Dictionary<string, Ticker> _bySymbol = new();
     private CancellationTokenSource? _streamCts;
-    private DateTimeOffset _startedAt;
+
+    public event Action? UpdateApplied;
 
     public ObservableCollection<Ticker> Tickers { get; } = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Ticker> _filteredTickers = new();
+
+    public PerformanceViewModel Performance { get; }
 
     [ObservableProperty]
     private bool _isInitialized;
@@ -30,6 +34,18 @@ public partial class CryptoDashboardViewModel : ObservableObject
     [ObservableProperty]
     private long _updatesReceived;
 
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
+    private string _totalTurnoverText = "—";
+
+    [ObservableProperty]
+    private string _topGainerText = "—";
+
+    [ObservableProperty]
+    private string _topLoserText = "—";
+
     public CryptoDashboardViewModel(
         IBybitService service,
         IMainThreadDispatcher dispatcher,
@@ -37,8 +53,11 @@ public partial class CryptoDashboardViewModel : ObservableObject
     {
         _service = service;
         _dispatcher = dispatcher;
-        _performance = performance;
+        Performance = performance;
     }
+
+    partial void OnSearchTextChanged(string value)
+        => RebuildFiltered();
 
     [RelayCommand]
     private async Task InitializeAsync()
@@ -64,6 +83,8 @@ public partial class CryptoDashboardViewModel : ObservableObject
                     _bySymbol[ticker.Symbol] = ticker;
                     Tickers.Add(ticker);
                 }
+
+                RebuildFiltered();
             });
 
             IsInitialized = true;
@@ -91,7 +112,6 @@ public partial class CryptoDashboardViewModel : ObservableObject
         }
 
         IsRunning = true;
-        _startedAt = DateTimeOffset.UtcNow;
         SetStatus("Streaming…");
 
         _streamCts = new CancellationTokenSource();
@@ -129,7 +149,7 @@ public partial class CryptoDashboardViewModel : ObservableObject
     {
         if (!marshalled)
         {
-            _performance.RecordUpdateStart();
+            Performance.RecordUpdateStart();
             _dispatcher.Dispatch(() => Apply(true, ticker));
             return;
         }
@@ -142,9 +162,52 @@ public partial class CryptoDashboardViewModel : ObservableObject
         {
             _bySymbol[ticker.Symbol] = ticker;
             Tickers.Add(ticker);
+            if (MatchesFilter(ticker))
+                FilteredTickers.Add(ticker);
         }
 
         UpdatesReceived++;
+        RecomputeMarketStrip();
+        UpdateApplied?.Invoke();
+    }
+
+    private void RebuildFiltered()
+    {
+        var query = SearchText?.Trim() ?? string.Empty;
+        var rebuilt = new ObservableCollection<Ticker>();
+        foreach (var ticker in Tickers)
+        {
+            if (query.Length == 0 || ticker.Symbol.Contains(query, StringComparison.OrdinalIgnoreCase))
+                rebuilt.Add(ticker);
+        }
+
+        FilteredTickers = rebuilt;
+    }
+
+    private bool MatchesFilter(Ticker ticker)
+    {
+        var query = SearchText?.Trim() ?? string.Empty;
+        return query.Length == 0 || ticker.Symbol.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void RecomputeMarketStrip()
+    {
+        decimal total = 0;
+        Ticker? gainer = null;
+        Ticker? loser = null;
+
+        foreach (var ticker in Tickers)
+        {
+            total += ticker.Turnover24h;
+            if (gainer is null || ticker.Price24hPcnt > gainer.Price24hPcnt)
+                gainer = ticker;
+            if (loser is null || ticker.Price24hPcnt < loser.Price24hPcnt)
+                loser = ticker;
+        }
+
+        TotalTurnoverText = Tickers.Count == 0 ? "—" : Formatting.FormatCompact(total);
+        TopGainerText = gainer is null ? "—" : $"{gainer.Symbol} {Formatting.FormatPct(gainer.Price24hPcnt)}";
+        TopLoserText = loser is null ? "—" : $"{loser.Symbol} {Formatting.FormatPct(loser.Price24hPcnt)}";
     }
 
     private void SetStatus(string message)

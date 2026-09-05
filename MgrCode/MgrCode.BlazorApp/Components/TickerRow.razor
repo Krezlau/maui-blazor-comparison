@@ -1,0 +1,87 @@
+@using System.Globalization
+@using System.Text
+@using Microsoft.AspNetCore.Components
+@using MgrCode.Backend.Models
+@using MgrCode.Backend.Services
+
+<tr class="ticker-row @FlashClass" style="--dot: @Formatting.ColorFromSymbol(Ticker.Symbol)">
+    <td class="c-asset">
+        <span class="dot"></span>
+        <span class="sym">@Ticker.Symbol</span>
+    </td>
+    <td class="c-last">@Formatting.FormatPrice(Ticker.LastPrice, Ticker.Symbol)</td>
+    <td class="c-pct">
+        <span class="badge @PctBadgeClass">@Formatting.FormatPct(Ticker.Price24hPcnt)</span>
+    </td>
+    <td class="c-vol">@Formatting.FormatCompact(Ticker.Volume24h)</td>
+    <td class="c-hl">@Formatting.FormatPrice(Ticker.HighPrice24h, Ticker.Symbol) / @Formatting.FormatPrice(Ticker.LowPrice24h, Ticker.Symbol)</td>
+    <td class="c-ba">@Formatting.FormatPrice(Ticker.Bid1Price, Ticker.Symbol) / @Formatting.FormatPrice(Ticker.Ask1Price, Ticker.Symbol)</td>
+    <td class="c-spark">
+        <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="@SparkPoints" fill="none" stroke="@SparkColor" stroke-width="1.5" />
+        </svg>
+    </td>
+</tr>
+
+@code {
+    [Parameter]
+    public Ticker Ticker { get; set; } = null!;
+
+    private string FlashClass => Ticker.Direction switch
+    {
+        PriceDirection.Up => "flash-up",
+        PriceDirection.Down => "flash-down",
+        _ => string.Empty
+    };
+
+    private string PctBadgeClass => Ticker.Price24hPcnt >= 0 ? "badge-up" : "badge-down";
+
+    private string SparkColor
+    {
+        get
+        {
+            var samples = Ticker.SparklineSamples;
+            return samples.Count > 1 && samples[^1] >= samples[0]
+                ? "#16A34A"
+                : "#DC2626";
+        }
+    }
+
+    private string SparkPoints
+    {
+        get
+        {
+            var samples = Ticker.SparklineSamples;
+            var count = samples.Count;
+            if (count < 2)
+                return string.Empty;
+
+            var min = samples[0];
+            var max = samples[0];
+            for (var i = 1; i < count; i++)
+            {
+                if (samples[i] < min) min = samples[i];
+                if (samples[i] > max) max = samples[i];
+            }
+
+            var range = max - min;
+            if (range <= 0)
+                range = 1m;
+
+            var sb = new StringBuilder(count * 8);
+            for (var i = 0; i < count; i++)
+            {
+                var x = 100.0 * i / (count - 1);
+                var normalized = (double)((samples[i] - min) / range);
+                var y = 32.0 - normalized * 32.0;
+                if (i > 0)
+                    sb.Append(' ');
+                sb.Append(x.ToString("0.0", CultureInfo.InvariantCulture))
+                  .Append(',')
+                  .Append(y.ToString("0.0", CultureInfo.InvariantCulture));
+            }
+
+            return sb.ToString();
+        }
+    }
+}

@@ -1,0 +1,113 @@
+@page "/"
+@using MgrCode.Backend.Services
+@using MgrCode.Backend.ViewModels
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject CryptoDashboardViewModel Vm
+
+<div class="dash">
+    <div class="dash-top">
+        <div class="dash-title">
+            <h2>Crypto Dashboard</h2>
+            <div class="dash-status">@Vm.Status</div>
+            <div class="dash-status">Updates: @Vm.UpdatesReceived.ToString("N0")</div>
+        </div>
+        <div class="dash-actions">
+            <button class="btn btn-primary btn-sm" @onclick="() => Vm.InitializeCommand.Execute(null)">Init</button>
+            <button class="btn btn-success btn-sm" @onclick="() => Vm.StartCommand.Execute(null)">Start</button>
+            <button class="btn btn-secondary btn-sm" @onclick="() => Vm.StopCommand.Execute(null)">Stop</button>
+            <label class="hud-toggle">
+                <input type="checkbox" @bind="Vm.Performance.ShowHud" /> HUD
+            </label>
+        </div>
+    </div>
+
+    <input class="form-control dash-search" placeholder="Search symbols…" @bind="Vm.SearchText" />
+
+    <div class="market-strip">
+        <span class="strip-item">TOTAL TURNOVER <strong>@Vm.TotalTurnoverText</strong></span>
+        <span class="strip-item">TOP GAINER <strong class="text-success">@Vm.TopGainerText</strong></span>
+        <span class="strip-item">TOP LOSER <strong class="text-danger">@Vm.TopLoserText</strong></span>
+    </div>
+
+    <div class="dash-table-wrap">
+        <table class="dash-table">
+            <thead>
+                <tr>
+                    <th class="c-asset">Asset</th>
+                    <th class="c-last">Last</th>
+                    <th class="c-pct">24h</th>
+                    <th class="c-vol">Volume</th>
+                    <th class="c-hl">High / Low</th>
+                    <th class="c-ba">Bid / Ask</th>
+                    <th class="c-spark">24h</th>
+                </tr>
+            </thead>
+            <tbody>
+                <Virtualize Items="@Vm.FilteredTickers" Context="t" ItemSize="40" OverscanCount="10">
+                    <TickerRow @key="@t.PriceTick" Ticker="@t" />
+                </Virtualize>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Vm.Performance.ShowHud)
+{
+    <div class="hud">
+        <div class="hud-title">PERF (BLAZOR)</div>
+        <div>FPS <strong>@Vm.Performance.Fps.ToString("F1")</strong></div>
+        <div>UPD/S <strong>@Vm.Performance.UpdatesPerSecond.ToString("F0")</strong></div>
+        <div>LAT <strong>@Vm.Performance.UpdateLatencyMs.ToString("F2")</strong> ms</div>
+        <div>MEM <strong>@Vm.Performance.MemoryMb.ToString("F0")</strong> MB</div>
+        <div>GC <strong>@Vm.Performance.GcGen0 / @Vm.Performance.GcGen1 / @Vm.Performance.GcGen2</strong></div>
+    </div>
+}
+
+@code {
+    private CancellationTokenSource? _sampleCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Vm.UpdateApplied += OnUpdateApplied;
+        if (!Vm.IsInitialized)
+            await Vm.InitializeCommand.ExecuteAsync(null);
+
+        _sampleCts = new CancellationTokenSource();
+        _ = SampleLoopAsync(_sampleCts.Token);
+    }
+
+    private void OnUpdateApplied()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SampleLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                await Task.Delay(500, token);
+                Vm.Performance.SampleStats();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Vm.Performance.RecordRenderEnd();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        Vm.UpdateApplied -= OnUpdateApplied;
+        _sampleCts?.Cancel();
+        _sampleCts?.Dispose();
+        _sampleCts = null;
+    }
+}

@@ -1,0 +1,161 @@
+.dash {
+    padding: 12px;
+}
+
+.dash-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.dash-title h2 {
+    margin: 0;
+}
+
+.dash-status {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.dash-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.hud-toggle {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 12px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.dash-search {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.market-strip {
+    display: flex;
+    gap: 20px;
+    padding: 6px 0;
+    margin-bottom: 6px;
+    font-size: 12px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.strip-item {
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+    .strip-item strong {
+        color: #1f2937;
+    }
+
+    .strip-item .text-success strong,
+    .strip-item strong.text-success {
+        color: #16a34a;
+    }
+
+    .strip-item .text-danger strong,
+    .strip-item strong.text-danger {
+        color: #dc2626;
+    }
+
+.dash-table-wrap {
+    max-height: calc(100vh - 230px);
+    overflow-y: auto;
+}
+
+.dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+}
+
+    .dash-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: #eef0f3;
+        padding: 6px;
+        font-weight: 600;
+        white-space: nowrap;
+        border-bottom: 1px solid #d6dadd;
+    }
+
+    .dash-table th.c-asset,
+    .dash-table td.c-asset {
+        text-align: left;
+        width: 18.6%;
+    }
+
+    .dash-table th.c-last,
+    .dash-table td.c-last {
+        text-align: right;
+        width: 12.7%;
+    }
+
+    .dash-table th.c-pct,
+    .dash-table td.c-pct {
+        text-align: right;
+        width: 9.3%;
+    }
+
+    .dash-table th.c-vol,
+    .dash-table td.c-vol {
+        text-align: right;
+        width: 11%;
+    }
+
+    .dash-table th.c-hl,
+    .dash-table td.c-hl {
+        text-align: right;
+        width: 14.4%;
+    }
+
+    .dash-table th.c-ba,
+    .dash-table td.c-ba {
+        text-align: right;
+        width: 14.4%;
+    }
+
+    .dash-table th.c-spark,
+    .dash-table td.c-spark {
+        text-align: left;
+        width: 11%;
+    }
+
+.hud {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+    .hud .hud-title {
+        color: #90ee90;
+        font-weight: bold;
+    }
+
+@media (min-width: 641px) {
+    .dash {
+        padding: 12px 24px;
+    }
+
+    .dash-table-wrap {
+        max-height: calc(100vh - 230px);
+    }
+}

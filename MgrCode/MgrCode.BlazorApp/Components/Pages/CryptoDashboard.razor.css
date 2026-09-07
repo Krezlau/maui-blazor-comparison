@@ -25,6 +25,33 @@
     align-items: center;
 }
 
+.cb-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.cb-primary {
+    color: #fff;
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.cb-success {
+    color: #fff;
+    background-color: #16a34a;
+    border-color: #16a34a;
+}
+
+.cb-secondary {
+    color: #1f2937;
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+
 .hud-toggle {
     display: flex;
     gap: 4px;
@@ -37,6 +64,12 @@
 .dash-search {
     font-size: 14px;
     margin-bottom: 8px;
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
 .market-strip {
@@ -57,13 +90,11 @@
         color: #1f2937;
     }
 
-    .strip-item .text-success strong,
-    .strip-item strong.text-success {
+    .strip-item strong.pos {
         color: #16a34a;
     }
 
-    .strip-item .text-danger strong,
-    .strip-item strong.text-danger {
+    .strip-item strong.neg {
         color: #dc2626;
     }
 
@@ -134,8 +165,8 @@
 
 .hud {
     position: fixed;
-    top: 8px;
-    right: 8px;
+    top: 150px;
+    right: 4px;
     z-index: 100;
     background: rgba(0, 0, 0, 0.85);
     color: #fff;

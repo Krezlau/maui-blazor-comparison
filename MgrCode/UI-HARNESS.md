@@ -1,12 +1,12 @@
-# UI Harness Progress (Steps 5/6 UI) — MgrCode
+# UI Harness — MgrCode (Steps 4–7: instrumentation, dashing parity, harness)
 
-Both placeholder dashboards are now identical, render-heavy trading UIs so that
-**per-row cost** and **per-frame churn** are the measurable bottleneck. This is the
-UI half of Steps 5/6; the full Step 4 `PerformanceMonitor` + CSV sink is a
-separate follow-up that reuses the t0/t1 hooks and HUD state built here.
+Both dashboards are identical, render-heavy trading UIs so that **per-row cost** and
+**per-frame churn** are the measurable bottleneck. The Step 4 CSV sink
+(`CsvPerformanceSink`, background writer), Step 7 device harness (`harness/`), and live
+metric hooks are implemented; this document covers the UI + methodology.
 
-> Date: Aug 2026 · Everything builds green on `net10.0-ios` / `net10.0-maccatalyst` /
-> `net10.0-android` + Backend + MockServer.
+> Date: Sep 2026 · Everything builds green on `net10.0-maccatalyst` /
+> `net10.0-android` / `net10.0-windows*` + Backend + MockServer.
 
 ---
 
@@ -174,8 +174,53 @@ In each app: tap **Init** → **Start**. Watch HUD:
 - Blazor `Virtualize` re-reads `Items` only on reference change — solved by replacing the
   `FilteredTickers` instance on every filter change (also keeps XAML `CollectionView` in sync).
 
-## 8. Next (Step 4 — separate pass)
+## 8. Next (Step 8 — live Bybit)
 
-Shared `PerformanceMonitor` + CSV sink + identical probe points, reusing the t0/t1 hooks and
-the HUD state built here (`SampleStats`, `Capture`). `DroppedFrames`, `UiThreadBusyPct`, and
-real GC-pause (`GC.RegisterForFullGCNotification` or a sampled stopwatch) are still stubs.
+Swap `IBybitService` to `RealBybitService` (one line per `MauiProgram`), verify against
+`api.bybit.com`, then run publish-config measurements. `DroppedFrames`/`UiThreadBusyPct`
+are derived estimates; `GcPauseMs` remains a stub.
+
+## 9. Fair comparison & measurement methodology
+
+The XAML and Blazor dashboards are the **same logical UI** — same controls, columns,
+row template, sparkline, HUD — with **no template chrome on either side**:
+
+- Blazor: `MainLayout` is a bare `@Body`; `NavMenu`, sidebar, top-row and Bootstrap
+  (`bootstrap.min.css`, `btn-*`, `form-control`, `text-*`) were removed. Scoped CSS
+  mirrors the XAML styling (HUD position top-150/right-4, header `LAST/24H/…` casing,
+  sparkline 90×32).
+- XAML: `Shell.NavBarIsVisible="False"` so it is full-bleed like the WebView.
+- Remaining cosmetic deltas (native fonts, Switch-vs-checkbox, column-ratio microdiffs)
+  are framework-native and documented here rather than forced into parity.
+
+### Declared inherent overhead (not removed, part of what is measured)
+- **BlazorWebView infrastructure**: host `index.html` (`#app`, `#blazor-error-ui`,
+  `.status-bar-safe-area`), `blazor.webview.js`, the `Router`/`RouteView` wrapper and the
+  WebView renderer itself. These are the hybrid runtime; removing them would change the
+  subject under test. Their XAML analogue is the native MAUI runtime + Shell.
+- `Weather` / `NotFound` template pages were deleted; they were unreachable during runs.
+
+### Idiomatic update mechanics (equivalent features, different internals)
+- Blazor keys rows with `@key="@t.PriceTick"`, which **recreates the `<tr>` DOM node on
+  every tick** — required for the CSS flash animation to restart. XAML flashes via a
+  300 ms timer on recycled native row views. Keep `@key`; it is the honest Blazor price.
+- Both sample loops (~500 ms) refresh the HUD; Blazor additionally calls
+  `StateHasChanged` there, so a few HUD-refresh renders are included in its FPS.
+- XAML updates mutate labels via `PropertyChanged` (static row views); Blazor diffs the
+  regenerated row markup per update.
+
+### Metric semantics (same column, different grain)
+- **XAML FPS** = native draws counted at `SparklineDrawable.Draw` (the t1 hook).
+- **Blazor FPS** = completed renders counted at `OnAfterRenderAsync` (component render +
+  DOM apply), not actual screen paints.
+- **LAT** is computed identically on both: t0 at `CryptoDashboardViewModel.Apply` (before
+  dispatch), t1 at the respective render hook — so latency is directly comparable.
+- `DroppedFrames` is an estimate: expected frames at the runtime refresh rate minus the
+  renders actually seen; `UiThreadBusyPct` is derived from sample-timer drift.
+
+### Known environment limits
+- MacCatalyst reports FPS≈0 when its window is occluded/headless (native paint and DOM
+  apply are both suspended for non-painted windows). Desktop legs need a foreground,
+  visible window; Android/Windows with active screens are unaffected.
+- Clear `harness/results/` before a formal matrix run; skip warm-up samples in analysis
+  (default `summarize.py --warmup 10` ≈ first 5 s).

@@ -160,7 +160,11 @@ mac_cell() {
   local app=$1 tickers=$2 ups=$3 label=$4 out=$5
   local name=$(app_name "$app") pkg=$(app_pkg "$app")
   local bundle
-  bundle=$(ls -d "$ROOT/$name/bin/Release/net10.0-maccatalyst/"*/*.app 2>/dev/null | head -n1)
+  # Prefer the canonical non-RID bundle: Release Catalyst packs wwwroot only there.
+  bundle=$(ls -d "$ROOT/$name/bin/Release/net10.0-maccatalyst/$name.app" 2>/dev/null | head -n1)
+  [[ -n "$bundle" && -d "$bundle" ]] || {
+    bundle=$(ls -d "$ROOT/$name/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/$name.app" 2>/dev/null | head -n1)
+  }
   [[ -d "$bundle" ]] || { warn "app bundle not found for $name; skipping $label"; return 1; }
 
   pkill -f "$bundle/Contents/MacOS/$name" 2>/dev/null || true

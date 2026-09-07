@@ -6,7 +6,8 @@
              xmlns:backendVms="clr-namespace:MgrCode.Backend.ViewModels;assembly=MgrCode.Backend"
              x:Class="MgrCode.XamlApp.Views.CryptoDashboardPage"
              x:DataType="backendVms:CryptoDashboardViewModel"
-             Title="Crypto Dashboard">
+             Title="Crypto Dashboard"
+             Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="6" Padding="12">
 

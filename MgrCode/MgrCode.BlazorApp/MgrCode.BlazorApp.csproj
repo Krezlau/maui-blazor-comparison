@@ -75,14 +75,18 @@
          ClientWebSocket (TickerStream). Trimming these roots in past builds
          left the WS receive loop stalled past the first frame. -->
     <ItemGroup>
-        <TrimmerRootAssembly Include="System.Net.WebSockets.Client" />
-        <TrimmerRootAssembly Include="System.Net.WebSockets" />
-        <TrimmerRootAssembly Include="System.Net.Sockets" />
-        <TrimmerRootAssembly Include="System.Net.Http" />
+        <TrimmerRootAssembly Include="System.Net.WebSockets.Client" RootMode="All" />
+        <TrimmerRootAssembly Include="System.Net.WebSockets" RootMode="All" />
+        <TrimmerRootAssembly Include="System.Net.Sockets" RootMode="All" />
+        <TrimmerRootAssembly Include="System.Net.Http" RootMode="All" />
     </ItemGroup>
 
+<!-- Release Catalyst: wwwroot (index.html, _framework, app.css) is only packed
+         into the canonical non-RID bundle (bin/Release/net10.0-maccatalyst/*.app),
+         not the maccatalyst-arm64/x64 RID bundles. The harness opens the canonical
+         bundle (see mac_cell in harness/run-matrix.sh). -->
     <ItemGroup>
-      <ProjectReference Include="..\MgrCode.Backend\MgrCode.Backend.csproj" />
+        <ProjectReference Include="..\MgrCode.Backend\MgrCode.Backend.csproj" />
     </ItemGroup>
 
 </Project>

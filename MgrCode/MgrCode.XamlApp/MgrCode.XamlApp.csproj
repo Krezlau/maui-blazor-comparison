@@ -72,10 +72,10 @@
 	     ClientWebSocket (TickerStream). Trimming these roots in past builds
 	     left the WS receive loop stalled past the first frame. -->
 	<ItemGroup>
-		<TrimmerRootAssembly Include="System.Net.WebSockets.Client" />
-		<TrimmerRootAssembly Include="System.Net.WebSockets" />
-		<TrimmerRootAssembly Include="System.Net.Sockets" />
-		<TrimmerRootAssembly Include="System.Net.Http" />
+		<TrimmerRootAssembly Include="System.Net.WebSockets.Client" RootMode="All" />
+		<TrimmerRootAssembly Include="System.Net.WebSockets" RootMode="All" />
+		<TrimmerRootAssembly Include="System.Net.Sockets" RootMode="All" />
+		<TrimmerRootAssembly Include="System.Net.Http" RootMode="All" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -14,34 +14,34 @@
             <div class="dash-status">Updates: @Vm.UpdatesReceived.ToString("N0")</div>
         </div>
         <div class="dash-actions">
-            <button class="btn btn-primary btn-sm" @onclick="() => Vm.InitializeCommand.Execute(null)">Init</button>
-            <button class="btn btn-success btn-sm" @onclick="() => Vm.StartCommand.Execute(null)">Start</button>
-            <button class="btn btn-secondary btn-sm" @onclick="() => Vm.StopCommand.Execute(null)">Stop</button>
+            <button class="cb-btn cb-primary" @onclick="() => Vm.InitializeCommand.Execute(null)">Init</button>
+            <button class="cb-btn cb-success" @onclick="() => Vm.StartCommand.Execute(null)">Start</button>
+            <button class="cb-btn cb-secondary" @onclick="() => Vm.StopCommand.Execute(null)">Stop</button>
             <label class="hud-toggle">
                 <input type="checkbox" @bind="Vm.Performance.ShowHud" /> HUD
             </label>
         </div>
     </div>
 
-    <input class="form-control dash-search" placeholder="Search symbols…" @bind="Vm.SearchText" />
+    <input class="dash-search" placeholder="Search symbols…" @bind="Vm.SearchText" />
 
     <div class="market-strip">
         <span class="strip-item">TOTAL TURNOVER <strong>@Vm.TotalTurnoverText</strong></span>
-        <span class="strip-item">TOP GAINER <strong class="text-success">@Vm.TopGainerText</strong></span>
-        <span class="strip-item">TOP LOSER <strong class="text-danger">@Vm.TopLoserText</strong></span>
+        <span class="strip-item">TOP GAINER <strong class="pos">@Vm.TopGainerText</strong></span>
+        <span class="strip-item">TOP LOSER <strong class="neg">@Vm.TopLoserText</strong></span>
     </div>
 
     <div class="dash-table-wrap">
         <table class="dash-table">
             <thead>
                 <tr>
-                    <th class="c-asset">Asset</th>
-                    <th class="c-last">Last</th>
-                    <th class="c-pct">24h</th>
-                    <th class="c-vol">Volume</th>
-                    <th class="c-hl">High / Low</th>
-                    <th class="c-ba">Bid / Ask</th>
-                    <th class="c-spark">24h</th>
+                    <th class="c-asset"></th>
+                    <th class="c-last">LAST</th>
+                    <th class="c-pct">24H</th>
+                    <th class="c-vol">VOLUME</th>
+                    <th class="c-hl">HIGH / LOW</th>
+                    <th class="c-ba">BID / ASK</th>
+                    <th class="c-spark">24H</th>
                 </tr>
             </thead>
             <tbody>

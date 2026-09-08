@@ -123,7 +123,7 @@ public partial class CryptoDashboardViewModel : ObservableObject
             try
             {
                 await foreach (var ticker in _service.Subscribe(symbols).WithCancellation(token))
-                    Apply(marshalled: true, ticker);
+                    Apply(marshalled: false, ticker);
             }
             catch (OperationCanceledException)
             {

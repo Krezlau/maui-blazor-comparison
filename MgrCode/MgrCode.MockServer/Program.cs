@@ -5,6 +5,9 @@ using System.Text.Json.Serialization;
 using MgrCode.MockServer;
 
 var builder = WebApplication.CreateBuilder(args);
+// Deterministic dual-stack bind (IPv4 + IPv6 ::1) regardless of working directory,
+// so iOS Simulator (localhost → ::1) and Catalyst/Android (IPv4) both reach it.
+builder.WebHost.UseUrls("http://[::]:5010");
 builder.Services.Configure<MockServerOptions>(builder.Configuration.GetSection(MockServerOptions.SectionName));
 builder.Logging.AddConsole();
 
